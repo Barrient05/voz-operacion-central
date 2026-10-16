@@ -1,0 +1,40 @@
+VOZ DE LA OPERACIÓN V42.2 — INTEGRACIÓN CENTRAL
+================================================
+
+CONTENIDO
+- index.html: página V42.2 original; se conserva el diseño y el cuestionario.
+- netlify/functions/casos.mjs: API para guardar y consultar respuestas centrales.
+- esquema.sql: estructura de la tabla PostgreSQL (la función también crea la tabla si no existe).
+- netlify.toml y package.json: configuración de publicación y dependencia PostgreSQL.
+
+IMPORTANTE
+Un archivo HTML abierto desde el disco no crea una base compartida. Esta carpeta debe publicarse como un sitio en Netlify y conectarse a una base PostgreSQL alojada en un proveedor como Neon, Supabase PostgreSQL u otro compatible.
+
+PASOS DE CONFIGURACIÓN
+1. Antes de publicar, abre la página actual en cada dispositivo que tenga respuestas y usa Centro de datos > Exportar JSON para IA / Descargar respaldo JSON. Guarda los respaldos en un lugar seguro. No borres los datos locales.
+2. Crea una base PostgreSQL. Copia su cadena de conexión (DATABASE_URL). No la compartas ni la pegues en el HTML.
+3. Sube TODO el contenido de esta carpeta a un repositorio Git o publícalo como proyecto de Netlify. No publiques solo index.html: la carpeta netlify/functions es necesaria.
+4. En la configuración del sitio de Netlify, agrega variables de entorno:
+   - DATABASE_URL = cadena privada de conexión a PostgreSQL
+   - VOZ_SYNC_TOKEN = clave larga y aleatoria de al menos 32 caracteres
+   Opcional: PGSSLMODE=disable solo si el proveedor expresamente no usa TLS; normalmente no se debe configurar.
+5. Despliega el sitio. La función está en /.netlify/functions/casos y crea la tabla automáticamente al recibir la primera petición autorizada. También se incluye esquema.sql por si prefieres crearla manualmente.
+6. Abre la URL HTTPS publicada. En Centro de datos, introduce la misma VOZ_SYNC_TOKEN y pulsa “Guardar clave y cargar respuestas”.
+7. En cada dispositivo antiguo, primero exporta un respaldo JSON. Después, abre la versión publicada, restaura el respaldo si hace falta y usa “Subir respuestas de este dispositivo a la base central”. Revisa el número de nuevas respuestas y duplicadas.
+8. En los demás dispositivos, abre la misma URL y usa la misma clave para consultar las respuestas centrales. Pulsa “Actualizar desde la base central” antes de exportar Excel, para incluir registros de otros dispositivos.
+
+NO DUPLICAR NI PERDER REGISTROS
+- La base central usa el folio/id como clave primaria. Si se reintenta subir un folio ya existente, no se crea otra fila ni se reemplaza el contenido que ya estaba guardado.
+- La página conserva la copia local y combina las respuestas centrales por folio.
+- No limpies el almacenamiento del navegador ni reemplaces el archivo antiguo hasta haber exportado respaldos y confirmado que los registros aparecen en la base central.
+- Antes de cada actualización, exporta JSON desde los dispositivos que tengan respuestas pendientes. Publicar una versión nueva del HTML no borra la base central, pero sí se pueden perder datos que existan solo en el almacenamiento local si borras el navegador o el dispositivo.
+
+SEGURIDAD — LEER ANTES DE USAR CON DATOS REALES
+La V42.2 actual usa una clave compartida introducida en el navegador. Eso es útil para un piloto controlado, pero cualquier persona que conozca esa clave y tenga acceso a la página podría consultar o enviar reportes; además, queda guardada en el almacenamiento local del dispositivo. No es un esquema adecuado para datos sensibles en un sitio público. Para uso productivo en Vitro, configura acceso restringido y autenticación por usuario/rol, y valida el despliegue con el área de TI/Seguridad de la Información. Nunca pongas DATABASE_URL ni credenciales de PostgreSQL en el HTML.
+
+PRUEBA DE ACEPTACIÓN
+- Enviar una respuesta desde un celular: debe indicar que se guardó en la base central.
+- Abrir Centro de datos en una computadora distinta y actualizar: debe aparecer el mismo folio.
+- Pulsar dos veces la sincronización o volver a subir el mismo respaldo: el número de duplicados puede aumentar, pero no debe aumentar el total de filas para esos folios.
+- Exportar Excel después de actualizar desde la base central y comprobar que contiene las respuestas de ambos dispositivos.
+- Desplegar una versión de prueba y confirmar que las respuestas existentes siguen apareciendo.

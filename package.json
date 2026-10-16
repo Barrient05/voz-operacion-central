@@ -1,0 +1,10 @@
+{
+  "name": "voz-de-la-operacion-central",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend de sincronización central para Voz de la Operación V42.2",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
